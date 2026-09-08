@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ติดตั้งโปรแกรม ESP32</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding-top: 50px;
+            background-color: #f4f4f9;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>อัปโหลดโปรแกรมลง ESP32</h1>
+        <p>เสียบสาย USB แล้วกดปุ่ม Connect ด้านล่าง</p>
+        
+        <!-- นี่คือปุ่มของ ESP Web Tools -->
+        <script type="module" src="https://unpkg.com/esp-web-tools@9.3.1/dist/web/install-button.js?module"></script>
+        
+        <!-- ระบุไฟล์ manifest.json ที่เก็บการตั้งค่าของไฟล์ .bin -->
+        <esp-web-install-button manifest="manifest.json"></esp-web-install-button>
+    </div>
+
+</body>
+</html>
