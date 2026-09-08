@@ -6,7 +6,7 @@
       "chipFamily": "ESP32",
       "parts": [
         {
-          "path": "firmware.bin", 
+          "path": "ailas_firebase_V2.ino.bin", 
           "offset": 65536
         }
       ]
