@@ -148,18 +148,18 @@ document.addEventListener('DOMContentLoaded', () => {
       // Fallback default
       firmwares = [
         {
-          id: 'ailas_firebase_v2',
-          name: 'AILAS Firebase Robot Controller V2',
+          id: 'ailas_robot_v2',
+          name: 'AILAS Robot Controller V2',
           version: '2.0.0',
           chipFamily: 'ESP32',
           category: 'Robot Controller',
-          description: 'โปรแกรมควบคุมหุ่นยนต์ Mobile Robot เชื่อมต่อ Firebase Realtime Database สำหรับโครงการ FIBO-School Consortium',
+          description: 'โปรแกรมควบคุมหุ่นยนต์ Mobile Robot สำหรับโครงการ FIBO-School Consortium',
           filename: 'ailas_firebase_V2.ino.bin',
           offset: 65536,
           offsetHex: '0x10000',
           date: '2026-09-09',
           author: 'FIBO School Consortium',
-          tags: ['Robot', 'Firebase', 'ESP32', 'Default']
+          tags: ['Robot', 'ESP32', 'Default']
         }
       ];
     }
@@ -395,31 +395,37 @@ document.addEventListener('DOMContentLoaded', () => {
     // Clear existing
     container.innerHTML = '';
 
+    // Check Web Serial support ourselves first.
+    // The esp-web-install-button's own "unsupported" slot detection can fail on
+    // some configurations (e.g. GitHub Pages with Blob URLs), so we handle it here.
+    if (!('serial' in navigator)) {
+      container.innerHTML = `
+        <div style="color:#fca5a5; font-size:0.9rem; display:flex; align-items:center; gap:10px; padding:12px 16px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:10px; max-width:520px; text-align:left;">
+          <span style="font-size:1.5rem; flex-shrink:0;">&#9888;</span>
+          <span>เบราว์เซอร์นี้ยังไม่รองรับ Web Serial API กรุณาเปิดด้วย <strong>Google Chrome</strong> หรือ <strong>Microsoft Edge</strong> บนคอมพิวเตอร์ (Desktop)</span>
+        </div>`;
+      return;
+    }
+
     // Create Blob URL for Manifest
     const manifestBlob = new Blob([JSON.stringify(manifestObject)], { type: 'application/json' });
     const manifestUrl = URL.createObjectURL(manifestBlob);
     activeBlobUrls.push(manifestUrl);
 
-    // Create new install button element
+    // Create new install button element (no "unsupported" slot — handled above)
     const installBtn = document.createElement('esp-web-install-button');
     installBtn.setAttribute('manifest', manifestUrl);
 
-    // Add slotted custom button
+    // Add slotted custom activate button
     const customSlotBtn = document.createElement('button');
     customSlotBtn.slot = 'activate';
     customSlotBtn.className = 'custom-flash-btn';
-    customSlotBtn.innerHTML = '⚡ Connect & Flash เข้า Espino32';
-
-    const unsupportedSpan = document.createElement('span');
-    unsupportedSpan.slot = 'unsupported';
-    unsupportedSpan.style.color = '#fca5a5';
-    unsupportedSpan.innerHTML = '⚠️ เบราว์เซอร์นี้ไม่รองรับ Web Serial กรุณาเปิดด้วย Google Chrome หรือ Microsoft Edge บนคอมพิวเตอร์';
+    customSlotBtn.innerHTML = '&#9889; Connect &amp; Flash เข้า Espino32';
 
     installBtn.appendChild(customSlotBtn);
-    installBtn.appendChild(unsupportedSpan);
-
     container.appendChild(installBtn);
   }
+
 
   // 6. Web Serial Terminal / Monitor
   termConnectBtn.addEventListener('click', async () => {
