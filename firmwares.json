@@ -1,0 +1,16 @@
+[
+  {
+    "id": "ailas_firebase_v2",
+    "name": "AILAS Firebase Robot Controller V2",
+    "version": "2.0.0",
+    "chipFamily": "ESP32",
+    "category": "Robot Controller",
+    "description": "โปรแกรมควบคุมหุ่นยนต์ Mobile Robot เชื่อมต่อ Firebase Realtime Database สำหรับโครงการ FIBO-School Consortium",
+    "filename": "ailas_firebase_V2.ino.bin",
+    "offset": 65536,
+    "offsetHex": "0x10000",
+    "date": "2026-09-09",
+    "author": "FIBO School Consortium",
+    "tags": ["Robot", "Firebase", "ESP32", "Default"]
+  }
+]

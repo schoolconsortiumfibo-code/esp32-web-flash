@@ -1,6 +1,7 @@
 {
-  "name": "My ESP32 Project",
-  "version": "1.0.0",
+  "name": "AILAS Firebase Robot Controller V2",
+  "version": "2.0.0",
+  "new_install_prompt_erase": false,
   "builds": [
     {
       "chipFamily": "ESP32",

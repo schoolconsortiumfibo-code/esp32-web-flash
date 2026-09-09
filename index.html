@@ -3,35 +3,419 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ติดตั้งโปรแกรม ESP32</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding-top: 50px;
-            background-color: #f4f4f9;
-        }
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            display: inline-block;
-        }
-    </style>
+    <title>ESP32 Web Flasher | FIBO School Consortium (Espino32 ThaiEasyElec)</title>
+    <meta name="description" content="ระบบติดตั้งโปรแกรมลงบอร์ด Espino32 (ThaiEasyElec) และ ESP32 ผ่านเว็บบราวเซอร์ รองรับไฟล์ .bin จาก Arduino IDE โดยตรง">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- ESP Web Tools Module -->
+    <script type="module" src="https://unpkg.com/esp-web-tools@9.3.1/dist/web/install-button.js?module"></script>
 </head>
 <body>
 
-    <div class="container">
-        <h1>อัปโหลดโปรแกรมลง ESP32</h1>
-        <p>เสียบสาย USB แล้วกดปุ่ม Connect ด้านล่าง</p>
+    <div class="app-container">
         
-        <!-- นี่คือปุ่มของ ESP Web Tools -->
-        <script type="module" src="https://unpkg.com/esp-web-tools@9.3.1/dist/web/install-button.js?module"></script>
-        
-        <!-- ระบุไฟล์ manifest.json ที่เก็บการตั้งค่าของไฟล์ .bin -->
-        <esp-web-install-button manifest="manifest.json"></esp-web-install-button>
+        <!-- Header -->
+        <header class="app-header">
+            <div class="brand-badge">
+                <span class="dot"></span>
+                <span>FIBO - School Consortium | Robot Platform</span>
+            </div>
+            <h1>⚡ ESP32 Web Flasher</h1>
+            <p>อัปโหลดโปรแกรมลงบอร์ด <strong>Espino32 (ThaiEasyElec)</strong> และ ESP32 ได้จากทุกที่ ผ่านเว็บบราวเซอร์</p>
+        </header>
+
+        <!-- Browser Compatibility Alert Banner -->
+        <div id="browserAlert" class="browser-alert">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="icon">🔍</span>
+                <span>กำลังตรวจสอบความเข้ากันได้ของบราวเซอร์...</span>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="tabs-nav">
+            <button class="tab-btn active" data-tab="github-tab">
+                <span class="tab-icon">🌐</span>
+                <span>โปรแกรมในคลัง GitHub</span>
+            </button>
+            <button class="tab-btn" data-tab="upload-tab">
+                <span class="tab-icon">💻</span>
+                <span>อัปโหลดไฟล์ .bin จากเครื่อง</span>
+            </button>
+            <button class="tab-btn" data-tab="terminal-tab">
+                <span class="tab-icon">📟</span>
+                <span>Serial Monitor</span>
+            </button>
+            <button class="tab-btn" data-tab="guide-tab">
+                <span class="tab-icon">📖</span>
+                <span>คู่มือและวิธีใช้งาน</span>
+            </button>
+        </nav>
+
+        <!-- TAB 1: GitHub Firmware Library -->
+        <section id="github-tab" class="tab-content active">
+            <div class="card">
+                <div class="card-title">
+                    <span>🌐</span>
+                    <span>เลือกโปรแกรมที่มีอยู่ในคลัง GitHub</span>
+                </div>
+                <div class="card-subtitle">
+                    โปรแกรมที่คอมไพล์เตรียมไว้ให้แล้วในระบบ เลือกโปรแกรมที่ต้องการแล้วเสียบสาย USB กด Flash ได้ทันที
+                </div>
+
+                <!-- Firmwares Grid -->
+                <div id="firmwareList" class="firmware-list">
+                    <!-- Populated by JavaScript -->
+                </div>
+
+                <!-- Flash Section -->
+                <div class="flash-action-area">
+                    <div id="githubFlashSummary" class="flash-summary">
+                        กำลังเตรียมข้อมูลโปรแกรม...
+                    </div>
+                    <div id="githubFlashContainer" class="flash-button-container">
+                        <!-- Dynamic esp-web-install-button injected here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: Direct Local Upload -->
+        <section id="upload-tab" class="tab-content">
+            <div class="card">
+                <div class="card-title">
+                    <span>💻</span>
+                    <span>อัปโหลดไฟล์ .bin จาก Arduino IDE</span>
+                </div>
+                <div class="card-subtitle">
+                    ลากวางหรือเลือกไฟล์ <code>.bin</code> ที่ได้จากการกด <em>Export Compiled Binary</em> ในเครื่องของคุณ
+                </div>
+
+                <!-- Dropzone -->
+                <div id="dropzone" class="dropzone">
+                    <span class="dropzone-icon">📥</span>
+                    <div class="dropzone-title">คลิกเลือกไฟล์ หรือลากไฟล์ .bin มาวางที่นี่</div>
+                    <div class="dropzone-hint">รองรับไฟล์ไบนารี .bin ทุกโปรเจกต์ของ ESP32</div>
+                    <input type="file" id="fileInput" class="file-input" accept=".bin">
+                </div>
+
+                <!-- File Preview -->
+                <div id="filePreview" class="file-preview">
+                    <div class="file-info">
+                        <span class="file-icon">📄</span>
+                        <div class="file-details">
+                            <h4 id="previewFileName">filename.bin</h4>
+                            <span id="previewFileSize">0 KB</span>
+                        </div>
+                    </div>
+                    <button type="button" id="removeFileBtn" class="file-remove-btn">✕ ยกเลิกไฟล์</button>
+                </div>
+
+                <!-- Flash Offset Configuration -->
+                <div class="settings-box">
+                    <div class="settings-box-header">
+                        <h4>
+                            <span>⚙️</span>
+                            <span>ตั้งค่าตำแหน่งบันทึกใน Flash (Offset Address)</span>
+                        </h4>
+                        <span class="badge" style="background: rgba(0,210,255,0.15); color: var(--primary);">Auto-detect</span>
+                    </div>
+
+                    <div class="offset-options">
+                        <label class="offset-radio-label selected">
+                            <input type="radio" name="offsetOption" value="app" checked>
+                            <div class="offset-radio-text">
+                                <strong>0x10000 (65536) - ค่าเริ่มต้น</strong>
+                                <span>ไฟล์ Sketch ทั่วไปจาก Arduino IDE (<code>.ino.bin</code>)</span>
+                            </div>
+                        </label>
+
+                        <label class="offset-radio-label">
+                            <input type="radio" name="offsetOption" value="merged">
+                            <div class="offset-radio-text">
+                                <strong>0x0 (0) - ไฟล์รวมระบบ</strong>
+                                <span>ไฟล์แบบ Merged Binary (<code>.merged.bin</code>)</span>
+                            </div>
+                        </label>
+
+                        <label class="offset-radio-label">
+                            <input type="radio" name="offsetOption" value="custom">
+                            <div class="offset-radio-text">
+                                <strong>กำหนดเอง (Custom Hex)</strong>
+                                <span>ระบุตำแหน่งเอง เช่น 0x1000, 0x8000</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div id="customOffsetWrap" class="custom-offset-input-wrap">
+                        <label for="customOffsetInput" style="font-size: 0.88rem; color: var(--text-muted);">Offset (Hex):</label>
+                        <input type="text" id="customOffsetInput" class="custom-offset-input" value="0x10000" placeholder="0x10000">
+                    </div>
+                </div>
+
+                <!-- Custom Flash Action Area -->
+                <div class="flash-action-area">
+                    <div id="customFlashSummary" class="flash-summary">
+                        กรุณาเลือกไฟล์ <code>.bin</code> ด้านบนเพื่อเปิดใช้งานปุ่ม Flash
+                    </div>
+                    <div id="customFlashContainer" class="flash-button-container">
+                        <!-- Dynamic button injected here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: Web Serial Terminal / Monitor -->
+        <section id="terminal-tab" class="tab-content">
+            <div class="terminal-card">
+                <div class="terminal-toolbar">
+                    <div class="terminal-actions">
+                        <button type="button" id="termConnectBtn" class="terminal-btn connect">
+                            🔌 เชื่อมต่อ (Connect)
+                        </button>
+                        <button type="button" id="termResetBtn" class="terminal-btn" disabled title="รีเซ็ตบอร์ด ESP32 ผ่านสัญญาณ RTS/DTR">
+                            🔄 รีเซ็ตบอร์ด (Reset ESP32)
+                        </button>
+                        <button type="button" id="termClearBtn" class="terminal-btn">
+                            🧹 ล้างหน้าจอ
+                        </button>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <label for="termBaudSelect" style="font-size: 0.85rem; color: var(--text-muted);">Baud Rate:</label>
+                        <select id="termBaudSelect" class="terminal-select">
+                            <option value="115200" selected>115200 (มาตรฐาน)</option>
+                            <option value="9600">9600</option>
+                            <option value="57600">57600</option>
+                            <option value="74880">74880 (ESP Boot)</option>
+                            <option value="230400">230400</option>
+                            <option value="460800">460800</option>
+                            <option value="921600">921600</option>
+                        </select>
+
+                        <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-muted); cursor: pointer;">
+                            <input type="checkbox" id="termAutoscroll" checked> เลื่อนอัตโนมัติ
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Console Screen -->
+                <div id="termScreen" class="terminal-screen">ESP32 Serial Monitor พร้อมใช้งาน...
+เสียบสาย USB แล้วกดปุ่ม "เชื่อมต่อ (Connect)" เพื่อดู Log จากบอร์ด
+</div>
+
+                <!-- Serial Input Bar -->
+                <div class="terminal-input-bar">
+                    <input type="text" id="termInput" class="terminal-input" placeholder="พิมพ์ข้อความที่ต้องการส่งไปยัง Serial Monitor แล้วกด Enter...">
+                    <button type="button" id="termSendBtn" class="terminal-btn" style="background: rgba(0, 210, 255, 0.2); color: var(--primary);">ส่ง (Send)</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: Guide & Troubleshooting -->
+        <section id="guide-tab" class="tab-content">
+            <div class="card">
+                <div class="card-title">
+                    <span>📖</span>
+                    <span>คู่มือการใช้งานและแก้ปัญหา (Espino32 ThaiEasyElec)</span>
+                </div>
+                <div class="card-subtitle">
+                    ขั้นตอนการสร้างไฟล์ .bin จาก Arduino IDE และข้อแนะนำในการติดตั้งโปรแกรม
+                </div>
+
+                <div class="guide-grid">
+                    
+                    <!-- Item 1: How to export .bin -->
+                    <div class="guide-item open">
+                        <div class="guide-header">
+                            <h3>
+                                <span>🛠️</span>
+                                <span>1. วิธีส่งออกไฟล์ .bin จากโปรแกรม Arduino IDE</span>
+                            </h3>
+                            <span class="guide-chevron">▼</span>
+                        </div>
+                        <div class="guide-body">
+                            <ul class="step-list">
+                                <li>
+                                    <div class="step-number">1</div>
+                                    <div>เปิดโปรแกรม Arduino IDE แล้วเปิด Sketch โค้ดที่ต้องการ</div>
+                                </li>
+                                <li>
+                                    <div class="step-number">2</div>
+                                    <div>เลือกบอร์ด ESP32 ที่ถูกต้อง เช่น <span class="code-badge">ESP32 Dev Module</span> หรือบอร์ด Espino32</div>
+                                </li>
+                                <li>
+                                    <div class="step-number">3</div>
+                                    <div>
+                                        ไปที่เมนูด้านบน <strong>Sketch</strong> &gt; คลิก <strong>Export Compiled Binary</strong> 
+                                        (หรือกดคีย์ลัด <span class="code-badge">Ctrl + Alt + S</span> บน Windows / <span class="code-badge">Cmd + Alt + S</span> บน Mac)
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="step-number">4</div>
+                                    <div>
+                                        รอจน Compile เสร็จ จากนั้นคลิกเมนู <strong>Sketch</strong> &gt; <strong>Show Sketch Folder</strong>
+                                        จะพบไฟล์ที่มีนามสกุล <code>.ino.bin</code> (เช่น <code>my_code.ino.bin</code>)
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="step-number">5</div>
+                                    <div>นำไฟล์ <code>.bin</code> ดังกล่าวมาลากวางในแท็บ <strong>"อัปโหลดไฟล์ .bin จากเครื่อง"</strong> บนเว็บนี้ได้ทันที!</div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Item 2: Espino32 Specifics & Driver -->
+                    <div class="guide-item">
+                        <div class="guide-header">
+                            <h3>
+                                <span>🔌</span>
+                                <span>2. คำแนะนำสำหรับบอร์ด Espino32 (ThaiEasyElec) และไดรเวอร์</span>
+                            </h3>
+                            <span class="guide-chevron">▼</span>
+                        </div>
+                        <div class="guide-body">
+                            <p>บอร์ด Espino32 ของ ThaiEasyElec ใช้ชิปแปลงสัญญาณ USB-to-UART ตระกูล <strong>Silicon Labs CP2104 / CP2102</strong>:</p>
+                            <ul class="step-list" style="margin-top: 10px;">
+                                <li>
+                                    <div class="step-number">•</div>
+                                    <div>
+                                        <strong>หากเสียบสายแล้วไม่พบพอร์ต Serial:</strong> คอมพิวเตอร์อาจยังไม่มีไดรเวอร์ CP210x ให้ดาวน์โหลดและติดตั้งได้ฟรีที่ 
+                                        <a href="https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers" target="_blank" rel="noopener" class="link-btn">Silicon Labs CP210x VCP Drivers</a>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="step-number">•</div>
+                                    <div>
+                                        <strong>สาย USB:</strong> ต้องเป็นสาย Data ที่ส่งข้อมูลได้ (สายชาร์จทั่วไปบางเส้นมีเฉพาะสายไฟเลี้ยง + / - ทำให้มองไม่เห็นพอร์ต)
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Item 3: Connection Timeout & BOOT button -->
+                    <div class="guide-item">
+                        <div class="guide-header">
+                            <h3>
+                                <span>🚨</span>
+                                <span>3. วิธีแก้ปัญหาเมื่อกด Connect แล้วขึ้น "Failed to connect" หรือ Time out</span>
+                            </h3>
+                            <span class="guide-chevron">▼</span>
+                        </div>
+                        <div class="guide-body">
+                            <div class="note-box">
+                                <strong>💡 ทริคสำคัญ:</strong> หากบอร์ดไม่ยอมเข้า Bootloader Mode อัตโนมัติ ให้ทำตามขั้นตอนนี้
+                            </div>
+                            <ul class="step-list" style="margin-top: 12px;">
+                                <li>
+                                    <div class="step-number">1</div>
+                                    <div>มองหาปุ่ม <strong>BOOT</strong> หรือปุ่ม <strong>IO0</strong> บนบอร์ด Espino32</div>
+                                </li>
+                                <li>
+                                    <div class="step-number">2</div>
+                                    <div>กดปุ่ม <strong>BOOT ค้างไว้</strong></div>
+                                </li>
+                                <li>
+                                    <div class="step-number">3</div>
+                                    <div>คลิกปุ่ม <strong>Connect &amp; Flash</strong> บนหน้าเว็บและเลือกพอร์ต COM</div>
+                                </li>
+                                <li>
+                                    <div class="step-number">4</div>
+                                    <div>เมื่อหน้าต่างขึ้นข้อความว่ากำลังเชื่อมต่อ (Connecting...) ให้<strong>ปล่อยปุ่ม BOOT</strong> ระบบจะเริ่มดาวน์โหลดโปรแกรมลงชิปทันที</div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Item 4: Offset Explanation -->
+                    <div class="guide-item">
+                        <div class="guide-header">
+                            <h3>
+                                <span>🧠</span>
+                                <span>4. ทำไมต้องเลือก Offset 0x10000 หรือ 0x0 ?</span>
+                            </h3>
+                            <span class="guide-chevron">▼</span>
+                        </div>
+                        <div class="guide-body">
+                            <p>ชิป ESP32 แบ่งโครงสร้างหน่วยความจำ Flash เป็นส่วนต่างๆ:</p>
+                            <ul class="step-list" style="margin-top: 10px;">
+                                <li>
+                                    <div class="step-number">📍</div>
+                                    <div>
+                                        <strong>Offset 0x10000 (หรือ 65536):</strong> เป็นตำแหน่งเก็บโค้ดหลัก (Application) เมื่อเรา Export จาก Arduino IDE ตัวไฟล์ <code>.ino.bin</code> จะมีเฉพาะส่วนนี้ จึงต้องเขียนที่ตำแหน่ง 0x10000 เพื่อไม่ให้ไปลบ Bootloader (0x1000) และ Partition Table (0x8000) ของเดิม
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="step-number">📦</div>
+                                    <div>
+                                        <strong>Offset 0x0 (หรือ 0):</strong> ใช้เฉพาะไฟล์แบบ <code>merged.bin</code> ซึ่งเป็นไฟล์ที่รวม Bootloader + Partitions + โค้ดโปรแกรมเข้าเป็นก้อนเดียวตั้งแต่ต้นทาง
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Item 5: How to add new firmwares to GitHub -->
+                    <div class="guide-item">
+                        <div class="guide-header">
+                            <h3>
+                                <span>☁️</span>
+                                <span>5. วิธีเพิ่มโปรแกรมใหม่เข้า GitHub เพื่อให้ทุกคนเลือกใช้ได้</span>
+                            </h3>
+                            <span class="guide-chevron">▼</span>
+                        </div>
+                        <div class="guide-body">
+                            <ul class="step-list">
+                                <li>
+                                    <div class="step-number">1</div>
+                                    <div>นำไฟล์ <code>.bin</code> โปรแกรมใหม่มาวางในโฟลเดอร์ Repository นี้</div>
+                                </li>
+                                <li>
+                                    <div class="step-number">2</div>
+                                    <div>
+                                        เปิดไฟล์ <code>firmwares.json</code> แล้วเพิ่มข้อมูลโปรแกรม เช่น ชื่อ, คำอธิบาย, ชื่อไฟล์, และ Offset
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="step-number">3</div>
+                                    <div>Commit และ Push ขึ้น GitHub ตามปกติ</div>
+                                </li>
+                                <li>
+                                    <div class="step-number">4</div>
+                                    <div>เมื่อ GitHub Pages อัปเดต ทุกคนที่เปิดเว็บไซต์นี้จะเห็นโปรแกรมใหม่ให้เลือก Flash ได้ทันที!</div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>
+                พัฒนาโดย <strong>FIBO - School Consortium</strong> สำหรับการเรียนรู้หุ่นยนต์และระบบสมองกลฝังตัว
+            </p>
+            <p style="margin-top: 6px;">
+                <a href="https://github.com/schoolconsortiumfibo-code/esp32-web-flash" target="_blank" rel="noopener">
+                    📂 ดูซอร์สโค้ดและไฟล์โปรแกรมบน GitHub (esp32-web-flash)
+                </a>
+            </p>
+        </footer>
+
     </div>
 
+    <!-- Application Script -->
+    <script src="app.js"></script>
 </body>
 </html>
