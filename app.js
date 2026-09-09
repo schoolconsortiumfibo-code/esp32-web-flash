@@ -702,12 +702,12 @@ document.addEventListener('DOMContentLoaded', () => {
         picture: payload.picture || ''
       });
     } else {
-      showModalError(`⛔ บัญชี "${payload.email}" ไม่มีสิทธิ์เข้าถึง!<br>ระบบอนุญาตเฉพาะบัญชี <strong>${REQUIRED_ADMIN_EMAIL}</strong> เท่านั้น`);
+      showModalError(`⛔ บัญชี "${payload.email}" ไม่มีสิทธิ์เข้าถึง!<br>ระบบอนุญาตเฉพาะบัญชีผู้ดูแลระบบ (Admin) เท่านั้น`);
     }
   }
 
   function fallbackGoogleLoginPrompt() {
-    const inputEmail = prompt(`กรุณาระบุอีเมล Google ของคุณเพื่อยืนยันสิทธิ์:\n(ต้องเป็น ${REQUIRED_ADMIN_EMAIL})`, REQUIRED_ADMIN_EMAIL);
+    const inputEmail = prompt('กรุณาระบุอีเมล Google ของคุณเพื่อเข้าสู่ระบบผู้ดูแลระบบ:');
     if (inputEmail === null) return;
 
     if (inputEmail.trim().toLowerCase() === REQUIRED_ADMIN_EMAIL.toLowerCase()) {
@@ -717,7 +717,7 @@ document.addEventListener('DOMContentLoaded', () => {
         picture: ''
       });
     } else {
-      showModalError(`⛔ บัญชี "${inputEmail}" ไม่มีสิทธิ์เข้าถึง!<br>ระบบอนุญาตเฉพาะบัญชี <strong>${REQUIRED_ADMIN_EMAIL}</strong> เท่านั้น`);
+      showModalError(`⛔ บัญชี "${inputEmail}" ไม่มีสิทธิ์เข้าถึง!<br>ระบบอนุญาตเฉพาะบัญชีผู้ดูแลระบบ (Admin) เท่านั้น`);
     }
   }
 
