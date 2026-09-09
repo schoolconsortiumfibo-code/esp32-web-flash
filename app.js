@@ -14,10 +14,31 @@ document.addEventListener('DOMContentLoaded', () => {
   let serialKeepReading = false;
   let activeBlobUrls = [];
 
+  // Authentication State
+  const REQUIRED_ADMIN_EMAIL = 'schoolconsortium.fibo@gmail.com';
+  let currentUser = JSON.parse(localStorage.getItem('esp32_admin_user') || 'null');
+  let googleClientId = localStorage.getItem('esp32_google_client_id') || '';
+
   // DOM Elements
   const tabs = document.querySelectorAll('.tab-btn');
   const tabContents = document.querySelectorAll('.tab-content');
   const browserAlert = document.getElementById('browserAlert');
+  
+  // Auth Elements
+  const authHeaderBar = document.getElementById('authHeaderBar');
+  const uploadTabBtn = document.getElementById('uploadTabBtn');
+  const uploadTabIcon = document.getElementById('uploadTabIcon');
+  const uploadTabLockBadge = document.getElementById('uploadTabLockBadge');
+  const uploadLockedView = document.getElementById('uploadLockedView');
+  const uploadUnlockedView = document.getElementById('uploadUnlockedView');
+  const lockedViewLoginBtn = document.getElementById('lockedViewLoginBtn');
+  const loginModal = document.getElementById('loginModal');
+  const modalCloseBtn = document.getElementById('modalCloseBtn');
+  const googleCustomLoginBtn = document.getElementById('googleCustomLoginBtn');
+  const modalErrorAlert = document.getElementById('modalErrorAlert');
+  const customClientIdInput = document.getElementById('customClientIdInput');
+  const saveClientIdBtn = document.getElementById('saveClientIdBtn');
+  const simulateAdminLoginBtn = document.getElementById('simulateAdminLoginBtn');
   
   // GitHub Library Elements
   const firmwareListContainer = document.getElementById('firmwareList');
@@ -50,10 +71,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Guide Accordions
   const guideHeaders = document.querySelectorAll('.guide-header');
 
-  // 1. Check Browser Web Serial API Support
+  // Initialize UI & Auth
+  initAuth();
   checkBrowserSupport();
 
-  // 2. Tab Navigation
+  // Tab Navigation
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
       const target = tab.dataset.tab;
@@ -61,7 +83,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  function isAuthorizedAdmin() {
+    return currentUser && currentUser.email && currentUser.email.toLowerCase() === REQUIRED_ADMIN_EMAIL.toLowerCase();
+  }
+
   function switchTab(tabId) {
+    // If trying to access upload tab without admin authorization
+    if (tabId === 'upload-tab' && !isAuthorizedAdmin()) {
+      openLoginModal();
+      return;
+    }
+
     activeTab = tabId;
     tabs.forEach(t => {
       if (t.dataset.tab === tabId) {
@@ -552,4 +584,268 @@ document.addEventListener('DOMContentLoaded', () => {
   function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
+
+  // =========================================================================
+  // Authentication & Authorization (Admin Only: schoolconsortium.fibo@gmail.com)
+  // =========================================================================
+  function initAuth() {
+    updateAuthUI();
+
+    // Fill Client ID input if already saved
+    if (customClientIdInput) {
+      customClientIdInput.value = googleClientId;
+    }
+
+    // Modal Close
+    if (modalCloseBtn) {
+      modalCloseBtn.addEventListener('click', closeLoginModal);
+    }
+    if (loginModal) {
+      loginModal.addEventListener('click', (e) => {
+        if (e.target === loginModal) closeLoginModal();
+      });
+    }
+
+    // Locked View Button
+    if (lockedViewLoginBtn) {
+      lockedViewLoginBtn.addEventListener('click', openLoginModal);
+    }
+
+    // Direct Google Button Click
+    if (googleCustomLoginBtn) {
+      googleCustomLoginBtn.addEventListener('click', () => {
+        hideModalError();
+        // If GIS loaded and initialized with Client ID, invoke prompt
+        if (window.google && window.google.accounts && googleClientId) {
+          try {
+            google.accounts.id.prompt((notification) => {
+              if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                fallbackGoogleLoginPrompt();
+              }
+            });
+            return;
+          } catch (e) {
+            console.warn('GIS Prompt error:', e);
+          }
+        }
+        // Fallback login prompt
+        fallbackGoogleLoginPrompt();
+      });
+    }
+
+    // Dev / Test Simulation Button
+    if (simulateAdminLoginBtn) {
+      simulateAdminLoginBtn.addEventListener('click', () => {
+        loginSuccess({
+          email: REQUIRED_ADMIN_EMAIL,
+          name: 'FIBO Consortium Admin',
+          picture: ''
+        });
+      });
+    }
+
+    // Save Client ID
+    if (saveClientIdBtn) {
+      saveClientIdBtn.addEventListener('click', () => {
+        const id = customClientIdInput.value.trim();
+        googleClientId = id;
+        localStorage.setItem('esp32_google_client_id', id);
+        alert('บันทึก Google OAuth Client ID เรียบร้อยแล้ว!');
+        setupGoogleGIS();
+      });
+    }
+
+    // Attempt GIS Setup
+    window.addEventListener('load', () => {
+      setTimeout(setupGoogleGIS, 500);
+    });
+  }
+
+  function setupGoogleGIS() {
+    if (!window.google || !google.accounts || !google.accounts.id) return;
+    if (!googleClientId) return;
+
+    try {
+      google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: handleGoogleCredentialResponse,
+        auto_select: false
+      });
+
+      const container = document.getElementById('gsiButtonContainer');
+      if (container) {
+        container.innerHTML = '';
+        google.accounts.id.renderButton(container, {
+          theme: 'filled_blue',
+          size: 'large',
+          text: 'signin_with',
+          shape: 'pill',
+          width: 320
+        });
+      }
+    } catch (err) {
+      console.warn('Failed to initialize GIS:', err);
+    }
+  }
+
+  function handleGoogleCredentialResponse(response) {
+    const payload = decodeJwt(response.credential);
+    if (!payload || !payload.email) {
+      showModalError('ไม่สามารถอ่านข้อมูลบัญชี Google ได้ กรุณาลองใหม่อีกครั้ง');
+      return;
+    }
+
+    if (payload.email.toLowerCase() === REQUIRED_ADMIN_EMAIL.toLowerCase()) {
+      loginSuccess({
+        email: payload.email,
+        name: payload.name || 'School Consortium Admin',
+        picture: payload.picture || ''
+      });
+    } else {
+      showModalError(`⛔ บัญชี "${payload.email}" ไม่มีสิทธิ์เข้าถึง!<br>ระบบอนุญาตเฉพาะบัญชี <strong>${REQUIRED_ADMIN_EMAIL}</strong> เท่านั้น`);
+    }
+  }
+
+  function fallbackGoogleLoginPrompt() {
+    const inputEmail = prompt(`กรุณาระบุอีเมล Google ของคุณเพื่อยืนยันสิทธิ์:\n(ต้องเป็น ${REQUIRED_ADMIN_EMAIL})`, REQUIRED_ADMIN_EMAIL);
+    if (inputEmail === null) return;
+
+    if (inputEmail.trim().toLowerCase() === REQUIRED_ADMIN_EMAIL.toLowerCase()) {
+      loginSuccess({
+        email: REQUIRED_ADMIN_EMAIL,
+        name: 'School Consortium Admin',
+        picture: ''
+      });
+    } else {
+      showModalError(`⛔ บัญชี "${inputEmail}" ไม่มีสิทธิ์เข้าถึง!<br>ระบบอนุญาตเฉพาะบัญชี <strong>${REQUIRED_ADMIN_EMAIL}</strong> เท่านั้น`);
+    }
+  }
+
+  function loginSuccess(userData) {
+    currentUser = userData;
+    localStorage.setItem('esp32_admin_user', JSON.stringify(currentUser));
+    closeLoginModal();
+    updateAuthUI();
+    switchTab('upload-tab');
+  }
+
+  function logout() {
+    currentUser = null;
+    localStorage.removeItem('esp32_admin_user');
+    updateAuthUI();
+    switchTab('github-tab');
+  }
+
+  function updateAuthUI() {
+    const isAuth = isAuthorizedAdmin();
+
+    // 1. Update Tab Button
+    if (uploadTabBtn) {
+      if (isAuth) {
+        uploadTabBtn.classList.add('unlocked');
+        if (uploadTabIcon) uploadTabIcon.textContent = '💻';
+        if (uploadTabLockBadge) {
+          uploadTabLockBadge.textContent = '👑 ปลดล็อกแล้ว';
+          uploadTabLockBadge.style.background = 'rgba(16, 185, 129, 0.2)';
+          uploadTabLockBadge.style.color = '#a7f3d0';
+          uploadTabLockBadge.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+        }
+      } else {
+        uploadTabBtn.classList.remove('unlocked');
+        if (uploadTabIcon) uploadTabIcon.textContent = '🔒';
+        if (uploadTabLockBadge) {
+          uploadTabLockBadge.textContent = 'เฉพาะแอดมิน';
+          uploadTabLockBadge.style.background = 'rgba(245, 158, 11, 0.2)';
+          uploadTabLockBadge.style.color = '#fde68a';
+          uploadTabLockBadge.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+        }
+      }
+    }
+
+    // 2. Update Tab Content Views
+    if (uploadLockedView && uploadUnlockedView) {
+      if (isAuth) {
+        uploadLockedView.style.display = 'none';
+        uploadUnlockedView.style.display = 'block';
+      } else {
+        uploadLockedView.style.display = 'block';
+        uploadUnlockedView.style.display = 'none';
+      }
+    }
+
+    // 3. Update Header Auth Bar
+    if (authHeaderBar) {
+      if (isAuth) {
+        authHeaderBar.innerHTML = `
+          <div class="auth-user-badge">
+            <span>👑</span>
+            <span><strong>Admin:</strong> ${escapeHtml(currentUser.email)}</span>
+            <button type="button" class="auth-logout-btn" id="authLogoutBtn">ออกจากระบบ</button>
+          </div>
+        `;
+        const logoutBtn = document.getElementById('authLogoutBtn');
+        if (logoutBtn) {
+          logoutBtn.addEventListener('click', logout);
+        }
+      } else {
+        authHeaderBar.innerHTML = `
+          <button type="button" class="auth-login-header-btn" id="authHeaderLoginBtn">
+            <span>🔑</span>
+            <span>เข้าสู่ระบบ Admin (Google)</span>
+          </button>
+        `;
+        const loginBtn = document.getElementById('authHeaderLoginBtn');
+        if (loginBtn) {
+          loginBtn.addEventListener('click', openLoginModal);
+        }
+      }
+    }
+  }
+
+  function openLoginModal() {
+    hideModalError();
+    if (loginModal) {
+      loginModal.classList.add('active');
+    }
+    setupGoogleGIS();
+  }
+
+  function closeLoginModal() {
+    if (loginModal) {
+      loginModal.classList.remove('active');
+    }
+    hideModalError();
+  }
+
+  function showModalError(message) {
+    if (modalErrorAlert) {
+      modalErrorAlert.innerHTML = message;
+      modalErrorAlert.classList.add('active');
+    }
+  }
+
+  function hideModalError() {
+    if (modalErrorAlert) {
+      modalErrorAlert.innerHTML = '';
+      modalErrorAlert.classList.remove('active');
+    }
+  }
+
+  function decodeJwt(token) {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      console.error('Failed to decode JWT:', e);
+      return null;
+    }
+  }
 });
+
