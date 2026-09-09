@@ -215,6 +215,9 @@ document.addEventListener('DOMContentLoaded', () => {
     githubFlashSummary.innerHTML = `โปรแกรมที่เลือก: <strong>${escapeHtml(fw.name)}</strong> (ไฟล์: <code>${escapeHtml(fw.filename)}</code> | Offset: <code>${escapeHtml(fw.offsetHex || '0x10000')}</code>)`;
     
     // Generate manifest for this firmware
+    // Convert relative filename to absolute URL so esp-web-tools can resolve it properly from a Blob manifest
+    const partPath = new URL(fw.filename, window.location.href).href;
+
     const manifest = {
       name: fw.name,
       version: fw.version || "1.0.0",
@@ -223,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
           chipFamily: fw.chipFamily || "ESP32",
           parts: [
             {
-              path: fw.filename,
+              path: partPath,
               offset: fw.offset || 65536
             }
           ]
@@ -421,6 +424,13 @@ document.addEventListener('DOMContentLoaded', () => {
     customSlotBtn.slot = 'activate';
     customSlotBtn.className = 'custom-flash-btn';
     customSlotBtn.innerHTML = '&#9889; Connect &amp; Flash เข้า Espino32';
+
+    // Friendly notification if Web Component has not yet finished loading from CDN
+    customSlotBtn.addEventListener('click', () => {
+      if (!customElements.get('esp-web-install-button')) {
+        alert('กำลังโหลดโมดูล ESP Web Flasher กรุณารอสักครู่หรือตรวจสอบการเชื่อมต่ออินเทอร์เน็ต');
+      }
+    });
 
     installBtn.appendChild(customSlotBtn);
     container.appendChild(installBtn);
