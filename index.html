@@ -528,14 +528,88 @@
                         </div>
                     </div>
 
-                    <!-- Section 2: GitHub Repository & Token Config -->
+                    <!-- Section 2: Upload Method & Backend Config -->
                     <div class="gh-form-section">
                         <h3 class="gh-section-title">
-                            <span>🐙</span>
-                            <span>ตั้งค่า GitHub Repository</span>
+                            <span>☁️</span>
+                            <span>การเชื่อมต่อระบบหลังบ้าน (Backend)</span>
                         </h3>
 
-                        <div class="gh-input-row">
+                        <!-- Backend Option Switcher -->
+                        <div class="upload-mode-selector">
+                            <label class="mode-tab active" id="modeGasTab">
+                                <input type="radio" name="uploadMode" value="gas" checked>
+                                <span>⚡ Google Apps Script (แนะนำ)</span>
+                            </label>
+                            <label class="mode-tab" id="modeTokenTab">
+                                <input type="radio" name="uploadMode" value="token">
+                                <span>🔑 GitHub Token ส่วนตัว</span>
+                            </label>
+                        </div>
+
+                        <!-- Mode A: Google Apps Script (Default & Recommended) -->
+                        <div id="gasConfigArea" class="mode-config-box">
+                            <div class="gas-security-banner">
+                                <span class="shield-icon">🛡️</span>
+                                <div>
+                                    <strong>ปลอดภัย ไม่ต้องใช้ Token ส่วนตัว:</strong>
+                                    <span>ระบบจะส่งไฟล์ผ่าน Google Apps Script หลังบ้านที่แอดมินตั้งค่าไว้ให้โดยอัตโนมัติ สมาชิกทุกคนสามารถช่วยอัปโหลดได้ทันที</span>
+                                </div>
+                            </div>
+
+                            <div class="gh-input-group" style="margin-top: 10px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                    <label class="gh-label" for="gasUrlInput">Google Apps Script Web App URL: <span class="required">*</span></label>
+                                    <button type="button" id="gasGuideBtn" class="gh-hint-link" style="background: none; border: none; cursor: pointer;">
+                                        📖 วิธีตั้งค่า GAS ใน 1 นาที ↗
+                                    </button>
+                                </div>
+                                <input type="url" id="gasUrlInput" class="gh-input" placeholder="https://script.google.com/macros/s/AKfycb.../exec" autocomplete="off">
+                                <div class="gh-token-hint">
+                                    นำ URL Web App ที่ได้จาก Google Apps Script มาวางที่นี่ (ระบบจะจำไว้ในอุปกรณ์ ไม่ต้องกรอกซ้ำ)
+                                </div>
+                            </div>
+
+                            <!-- GAS Setup Mini-Guide -->
+                            <div id="gasGuideBox" class="gas-guide-modal">
+                                <strong>📋 วิธีติดตั้ง Google Apps Script ใน 1 นาที:</strong>
+                                <ol>
+                                    <li>เปิดเว็บ <a href="https://script.google.com" target="_blank" rel="noopener" class="gh-hint-link">script.google.com</a> แล้วกด <strong>"โครงการใหม่" (New Project)</strong></li>
+                                    <li>คัดลอกโค้ดทั้งหมดในไฟล์ <code>google_apps_script.js</code> ในโปรเจกต์นี้ ไปวางแทนที่โค้ดเดิมใน <code>Code.gs</code></li>
+                                    <li>ใส่ GitHub Token สิทธิ์ <code>repo</code> ในตัวแปร <code>CONFIG.GITHUB_TOKEN</code> (บรรทัดที่ 26)</li>
+                                    <li>กดปุ่มสีน้ำเงิน <strong>"ทำให้ใช้งานได้" (Deploy) > "การทำให้ใช้งานได้รายการใหม่" (New deployment)</strong></li>
+                                    <li>เลือกประเภท <strong>"เว็บแอป" (Web app)</strong> โดยตั้ง <em>ดำเนินการในฐานะ: "ฉัน" (Me)</em> และ <em>ผู้มีสิทธิ์เข้าถึง: "ทุกคน" (Anyone)</em></li>
+                                    <li>กด <strong>"ทำให้ใช้งานได้"</strong> แล้วคัดลอก <strong>"URL ของเว็บแอป"</strong> (ที่ลงท้ายด้วย <code>/exec</code>) มาวางในช่องด้านบนนี้</li>
+                                </ol>
+                            </div>
+                        </div>
+
+                        <!-- Mode B: Direct Token (Fallback) -->
+                        <div id="tokenConfigArea" class="mode-config-box" style="display: none;">
+                            <div class="gh-input-group">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                    <label class="gh-label" for="ghTokenInput" style="margin-bottom: 0;">
+                                        GitHub Personal Access Token (PAT): <span class="required">*</span>
+                                    </label>
+                                    <a href="https://github.com/settings/tokens/new?scopes=repo&description=ESP32-Web-Flash-Admin" target="_blank" rel="noopener" class="gh-hint-link">
+                                        🔑 วิธีสร้าง Token ↗
+                                    </a>
+                                </div>
+                                <div class="gh-password-wrap">
+                                    <input type="password" id="ghTokenInput" class="gh-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx หรือ github_pat_xxxx" autocomplete="off">
+                                    <button type="button" id="ghToggleTokenVisibilityBtn" class="gh-toggle-btn" title="ดู / ซ่อน Token">👁️</button>
+                                </div>
+                                <div class="gh-token-hint">
+                                    สิทธิ์ที่ต้องเลือกตอนสร้าง Token: <code>repo</code> เพื่อให้อนุญาตเขียนไฟล์ลง Repository ได้
+                                </div>
+                                <label class="gh-remember-token-label">
+                                    <input type="checkbox" id="ghRememberTokenCheck" checked>
+                                    <span>จดจำ Token ไว้ในเบราว์เซอร์นี้ (ไม่ต้องกรอกใหม่ในครั้งต่อไป)</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="gh-input-row" style="margin-top: 6px;">
                             <div class="gh-input-group" style="flex: 2;">
                                 <label class="gh-label" for="ghRepoOwner">เจ้าของ / Repository:</label>
                                 <div class="gh-repo-input-combo">
@@ -548,28 +622,6 @@
                                 <label class="gh-label" for="ghRepoBranch">Branch:</label>
                                 <input type="text" id="ghRepoBranch" class="gh-input" value="main" placeholder="main">
                             </div>
-                        </div>
-
-                        <div class="gh-input-group">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                                <label class="gh-label" for="ghTokenInput" style="margin-bottom: 0;">
-                                    GitHub Personal Access Token (PAT): <span class="required">*</span>
-                                </label>
-                                <a href="https://github.com/settings/tokens/new?scopes=repo&description=ESP32-Web-Flash-Admin" target="_blank" rel="noopener" class="gh-hint-link">
-                                    🔑 วิธีสร้าง Token ↗
-                                </a>
-                            </div>
-                            <div class="gh-password-wrap">
-                                <input type="password" id="ghTokenInput" class="gh-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx หรือ github_pat_xxxx" autocomplete="off">
-                                <button type="button" id="ghToggleTokenVisibilityBtn" class="gh-toggle-btn" title="ดู / ซ่อน Token">👁️</button>
-                            </div>
-                            <div class="gh-token-hint">
-                                สิทธิ์ที่ต้องเลือกตอนสร้าง Token: <code>repo</code> เพื่อให้อนุญาตเขียนไฟล์ลง Repository ได้
-                            </div>
-                            <label class="gh-remember-token-label">
-                                <input type="checkbox" id="ghRememberTokenCheck" checked>
-                                <span>จดจำ Token ไว้ในเบราว์เซอร์นี้ (ไม่ต้องกรอกใหม่ในครั้งต่อไป)</span>
-                            </label>
                         </div>
                     </div>
                 </div>
