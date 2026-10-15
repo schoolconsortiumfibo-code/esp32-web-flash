@@ -57,6 +57,38 @@ document.addEventListener('DOMContentLoaded', () => {
   const customOffsetInput = document.getElementById('customOffsetInput');
   const customFlashContainer = document.getElementById('customFlashContainer');
   const customFlashSummary = document.getElementById('customFlashSummary');
+  const customActionButtonsGroup = document.getElementById('customActionButtonsGroup');
+  const openGithubUploadBtn = document.getElementById('openGithubUploadBtn');
+
+  // GitHub Upload Modal Elements
+  const githubUploadModal = document.getElementById('githubUploadModal');
+  const ghModalCloseBtn = document.getElementById('ghModalCloseBtn');
+  const ghCancelBtn = document.getElementById('ghCancelBtn');
+  const ghSubmitUploadBtn = document.getElementById('ghSubmitUploadBtn');
+  const ghViewCatalogBtn = document.getElementById('ghViewCatalogBtn');
+  const ghViewRepoLink = document.getElementById('ghViewRepoLink');
+  
+  const ghFwName = document.getElementById('ghFwName');
+  const ghFwVersion = document.getElementById('ghFwVersion');
+  const ghFwCategory = document.getElementById('ghFwCategory');
+  const ghFwDesc = document.getElementById('ghFwDesc');
+  const ghFwAuthor = document.getElementById('ghFwAuthor');
+  const ghFwOffset = document.getElementById('ghFwOffset');
+  const ghRepoOwner = document.getElementById('ghRepoOwner');
+  const ghRepoName = document.getElementById('ghRepoName');
+  const ghRepoBranch = document.getElementById('ghRepoBranch');
+  const ghTokenInput = document.getElementById('ghTokenInput');
+  const ghToggleTokenVisibilityBtn = document.getElementById('ghToggleTokenVisibilityBtn');
+  const ghRememberTokenCheck = document.getElementById('ghRememberTokenCheck');
+
+  const ghUploadStatusBox = document.getElementById('ghUploadStatusBox');
+  const ghStatusSpinner = document.getElementById('ghStatusSpinner');
+  const ghStatusTitle = document.getElementById('ghStatusTitle');
+  const ghStep1 = document.getElementById('ghStep1');
+  const ghStep2 = document.getElementById('ghStep2');
+  const ghStep3 = document.getElementById('ghStep3');
+  const ghStep4 = document.getElementById('ghStep4');
+  const ghStatusError = document.getElementById('ghStatusError');
 
   // Terminal Elements
   const termBaudSelect = document.getElementById('termBaudSelect');
@@ -268,7 +300,8 @@ document.addEventListener('DOMContentLoaded', () => {
     fileInput.value = '';
     filePreview.classList.remove('active');
     customFlashContainer.innerHTML = '';
-    customFlashSummary.innerHTML = 'กรุณาเลือกไฟล์ <code>.bin</code> เพื่อเปิดใช้งานปุ่ม Flash';
+    if (customActionButtonsGroup) customActionButtonsGroup.style.display = 'none';
+    customFlashSummary.innerHTML = 'กรุณาเลือกไฟล์ <code>.bin</code> ด้านบนเพื่อเปิดใช้งานปุ่มการทำงาน';
   });
 
   offsetRadios.forEach(radio => {
@@ -364,6 +397,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function generateCustomFlashButton() {
     if (!localFile) return;
+
+    if (customActionButtonsGroup) {
+      customActionButtonsGroup.style.display = 'flex';
+    }
 
     const offsetNum = getSelectedOffset();
     const offsetHex = '0x' + offsetNum.toString(16).toUpperCase();
@@ -862,6 +899,388 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Failed to decode JWT:', e);
       return null;
     }
+  }
+
+  // ==========================================
+  // 7. GitHub Repository Upload Implementation
+  // ==========================================
+  initGithubUpload();
+
+  function initGithubUpload() {
+    // Load saved settings if any
+    const savedGhToken = localStorage.getItem('esp32_github_token');
+    if (savedGhToken && ghTokenInput) {
+      ghTokenInput.value = savedGhToken;
+    }
+    const savedRepoOwner = localStorage.getItem('esp32_github_owner');
+    if (savedRepoOwner && ghRepoOwner) ghRepoOwner.value = savedRepoOwner;
+    const savedRepoName = localStorage.getItem('esp32_github_repo');
+    if (savedRepoName && ghRepoName) ghRepoName.value = savedRepoName;
+    const savedRepoBranch = localStorage.getItem('esp32_github_branch');
+    if (savedRepoBranch && ghRepoBranch) ghRepoBranch.value = savedRepoBranch;
+
+    // Toggle password visibility
+    if (ghToggleTokenVisibilityBtn && ghTokenInput) {
+      ghToggleTokenVisibilityBtn.addEventListener('click', () => {
+        if (ghTokenInput.type === 'password') {
+          ghTokenInput.type = 'text';
+          ghToggleTokenVisibilityBtn.textContent = '🙈';
+        } else {
+          ghTokenInput.type = 'password';
+          ghToggleTokenVisibilityBtn.textContent = '👁️';
+        }
+      });
+    }
+
+    // Open Modal
+    if (openGithubUploadBtn) {
+      openGithubUploadBtn.addEventListener('click', () => {
+        if (!localFile) {
+          alert('กรุณาเลือกไฟล์ .bin ก่อนทำการอัปโหลด');
+          return;
+        }
+        openGithubModal();
+      });
+    }
+
+    // Close Modal buttons
+    if (ghModalCloseBtn) ghModalCloseBtn.addEventListener('click', closeGithubModal);
+    if (ghCancelBtn) ghCancelBtn.addEventListener('click', closeGithubModal);
+
+    // Close on overlay backdrop click
+    if (githubUploadModal) {
+      githubUploadModal.addEventListener('click', (e) => {
+        if (e.target === githubUploadModal) closeGithubModal();
+      });
+    }
+
+    // Submit Upload
+    if (ghSubmitUploadBtn) {
+      ghSubmitUploadBtn.addEventListener('click', handleGithubUpload);
+    }
+  }
+
+  function openGithubModal() {
+    if (!localFile) return;
+
+    // Pre-populate clean program name from filename
+    const rawName = localFile.name.replace(/\.ino\.bin$/i, '').replace(/\.bin$/i, '');
+    const cleanName = rawName
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .split(' ')
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+    
+    if (ghFwName) ghFwName.value = cleanName || 'ESP32 Firmware';
+    if (ghFwDesc) ghFwDesc.value = `โปรแกรม ${cleanName || 'ESP32'} สำหรับหุ่นยนต์ Mobile Robot (FIBO School Consortium)`;
+    
+    // Set Author
+    if (ghFwAuthor) {
+      ghFwAuthor.value = (currentUser && (currentUser.name || currentUser.email)) 
+        ? `${currentUser.name || currentUser.email}`
+        : 'FIBO School Consortium';
+    }
+
+    // Offset
+    const offsetNum = getSelectedOffset();
+    const offsetHex = '0x' + offsetNum.toString(16).toUpperCase();
+    if (ghFwOffset) ghFwOffset.value = `${offsetHex} (${offsetNum})`;
+
+    // Reset status & button states
+    if (ghUploadStatusBox) ghUploadStatusBox.style.display = 'none';
+    if (ghStatusError) {
+      ghStatusError.style.display = 'none';
+      ghStatusError.innerHTML = '';
+    }
+    [ghStep1, ghStep2, ghStep3, ghStep4].forEach(s => {
+      if (s) s.className = 'gh-step';
+    });
+
+    if (ghSubmitUploadBtn) {
+      ghSubmitUploadBtn.disabled = false;
+      ghSubmitUploadBtn.style.display = 'inline-flex';
+    }
+    if (ghCancelBtn) ghCancelBtn.style.display = 'inline-flex';
+    if (ghViewCatalogBtn) ghViewCatalogBtn.style.display = 'none';
+    if (ghViewRepoLink) ghViewRepoLink.style.display = 'none';
+
+    // Show modal
+    if (githubUploadModal) githubUploadModal.classList.add('active');
+  }
+
+  function closeGithubModal() {
+    if (githubUploadModal) {
+      githubUploadModal.classList.remove('active');
+    }
+  }
+
+  async function handleGithubUpload() {
+    if (!localFile) {
+      alert('ไม่พบไฟล์ .bin');
+      return;
+    }
+
+    const fwName = ghFwName.value.trim();
+    const fwVersion = (ghFwVersion.value || '1.0.0').trim();
+    const fwCategory = ghFwCategory.value;
+    const fwDesc = (ghFwDesc.value || `โปรแกรม ${fwName} สำหรับ ESP32`).trim();
+    const fwAuthor = (ghFwAuthor.value || 'FIBO School Consortium').trim();
+    const owner = (ghRepoOwner.value || 'schoolconsortiumfibo-code').trim();
+    const repo = (ghRepoName.value || 'esp32-web-flash').trim();
+    const branch = (ghRepoBranch.value || 'main').trim();
+    const token = ghTokenInput.value.trim();
+
+    if (!fwName) {
+      alert('กรุณาระบุชื่อโปรแกรม');
+      ghFwName.focus();
+      return;
+    }
+
+    if (!token) {
+      alert('กรุณากรอก GitHub Personal Access Token (PAT) ที่มีสิทธิ์ repo เพื่อให้อนุญาตเขียนไฟล์ลง Repository ได้');
+      ghTokenInput.focus();
+      return;
+    }
+
+    if (!owner || !repo) {
+      alert('กรุณาระบุ Owner และ Repository Name');
+      return;
+    }
+
+    // Save token if checked
+    if (ghRememberTokenCheck && ghRememberTokenCheck.checked) {
+      localStorage.setItem('esp32_github_token', token);
+      localStorage.setItem('esp32_github_owner', owner);
+      localStorage.setItem('esp32_github_repo', repo);
+      localStorage.setItem('esp32_github_branch', branch);
+    } else {
+      localStorage.removeItem('esp32_github_token');
+    }
+
+    // Set UI state to Uploading
+    ghSubmitUploadBtn.disabled = true;
+    ghCancelBtn.style.display = 'none';
+    ghUploadStatusBox.style.display = 'flex';
+    ghStatusError.style.display = 'none';
+    ghStatusError.innerHTML = '';
+    ghStatusSpinner.textContent = '⏳';
+    ghStatusTitle.textContent = 'กำลังดำเนินการอัปโหลดเข้า GitHub...';
+
+    const setStep = (stepEl, status) => {
+      if (stepEl) stepEl.className = `gh-step ${status}`;
+    };
+
+    try {
+      // Step 1: Read binary as Base64
+      setStep(ghStep1, 'active');
+      ghStatusTitle.textContent = '1/4 กำลังแปลงไฟล์ .bin เป็น Base64...';
+      const base64Content = await readBinaryFileAsBase64(localFile);
+      setStep(ghStep1, 'done');
+
+      // Step 2: Upload .bin to GitHub contents API
+      setStep(ghStep2, 'active');
+      ghStatusTitle.textContent = `2/4 กำลังอัปโหลดไฟล์ ${localFile.name} ขึ้น GitHub...`;
+
+      const filename = localFile.name;
+      const fileEndpoint = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodeURIComponent(filename)}?ref=${encodeURIComponent(branch)}`;
+
+      let existingFileSha = null;
+      try {
+        const checkRes = await fetch(fileEndpoint, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+
+        if (checkRes.ok) {
+          const fileData = await checkRes.json();
+          existingFileSha = fileData.sha;
+        } else if (checkRes.status === 401 || checkRes.status === 403) {
+          throw new Error('GitHub Token ไม่ถูกต้อง หรือไม่มีสิทธิ์เข้าถึง Repository นี้ (กรุณาตรวจสอบสิทธิ์ repo ใน Token)');
+        }
+      } catch (errCheck) {
+        if (errCheck.message && errCheck.message.includes('Token')) throw errCheck;
+      }
+
+      const uploadBody = {
+        message: `Upload firmware binary: ${filename} via Web Flasher Admin`,
+        content: base64Content,
+        branch: branch
+      };
+      if (existingFileSha) {
+        uploadBody.sha = existingFileSha;
+      }
+
+      const uploadRes = await fetch(`https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodeURIComponent(filename)}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(uploadBody)
+      });
+
+      if (!uploadRes.ok) {
+        const errJson = await uploadRes.json().catch(() => ({}));
+        throw new Error(`อัปโหลดไฟล์ .bin ไม่สำเร็จ: ${errJson.message || uploadRes.statusText}`);
+      }
+
+      setStep(ghStep2, 'done');
+
+      // Step 3: Fetch and update firmwares.json
+      setStep(ghStep3, 'active');
+      ghStatusTitle.textContent = '3/4 กำลังอัปเดตข้อมูลใน firmwares.json...';
+
+      const jsonEndpoint = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/firmwares.json?ref=${encodeURIComponent(branch)}`;
+      let firmwaresSha = null;
+      let catalogList = [];
+
+      const getJsonRes = await fetch(jsonEndpoint, {
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+
+      if (getJsonRes.ok) {
+        const jsonData = await getJsonRes.json();
+        firmwaresSha = jsonData.sha;
+        try {
+          const jsonText = base64ToUtf8(jsonData.content);
+          catalogList = JSON.parse(jsonText);
+          if (!Array.isArray(catalogList)) catalogList = [];
+        } catch (e) {
+          console.warn('Could not parse existing firmwares.json, resetting array:', e);
+          catalogList = [];
+        }
+      }
+
+      const offsetNum = getSelectedOffset();
+      const offsetHex = '0x' + offsetNum.toString(16).toUpperCase();
+      const firmwareId = filename.replace(/\.bin$/i, '').replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+
+      const newEntry = {
+        id: firmwareId,
+        name: fwName,
+        version: fwVersion,
+        chipFamily: "ESP32",
+        category: fwCategory,
+        description: fwDesc,
+        filename: filename,
+        offset: offsetNum,
+        offsetHex: offsetHex,
+        date: new Date().toISOString().split('T')[0],
+        author: fwAuthor,
+        tags: [fwCategory, "ESP32", "WebUpload"]
+      };
+
+      const existingIndex = catalogList.findIndex(item => item.filename === filename || item.id === firmwareId);
+      if (existingIndex >= 0) {
+        catalogList[existingIndex] = newEntry;
+      } else {
+        catalogList.push(newEntry);
+      }
+
+      const updatedJsonString = JSON.stringify(catalogList, null, 2);
+      const updatedJsonBase64 = utf8ToBase64(updatedJsonString);
+
+      const updateJsonBody = {
+        message: `Update firmwares.json catalog: add/update ${filename}`,
+        content: updatedJsonBase64,
+        branch: branch
+      };
+      if (firmwaresSha) {
+        updateJsonBody.sha = firmwaresSha;
+      }
+
+      const updateJsonRes = await fetch(`https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/firmwares.json`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updateJsonBody)
+      });
+
+      if (!updateJsonRes.ok) {
+        const errJson = await updateJsonRes.json().catch(() => ({}));
+        throw new Error(`อัปเดต firmwares.json ไม่สำเร็จ: ${errJson.message || updateJsonRes.statusText}`);
+      }
+
+      setStep(ghStep3, 'done');
+
+      // Step 4: Finish & Local State Update
+      setStep(ghStep4, 'done');
+      ghStatusSpinner.textContent = '🎉';
+      ghStatusTitle.textContent = 'อัปโหลดเข้า GitHub และบันทึกเข้าคลังโปรแกรมสำเร็จแล้ว!';
+
+      // Update in-memory catalog and re-render tab 1
+      firmwares = catalogList;
+      renderFirmwareList();
+
+      // Update modal buttons
+      ghSubmitUploadBtn.style.display = 'none';
+      ghCancelBtn.style.display = 'none';
+      ghViewCatalogBtn.style.display = 'inline-flex';
+
+      const fileGithubUrl = `https://github.com/${owner}/${repo}/blob/${branch}/${encodeURIComponent(filename)}`;
+      ghViewRepoLink.href = fileGithubUrl;
+      ghViewRepoLink.style.display = 'inline-flex';
+
+      ghViewCatalogBtn.onclick = () => {
+        closeGithubModal();
+        switchTab('github-tab');
+        const card = document.querySelector(`.firmware-card[data-id="${firmwareId}"]`);
+        if (card) {
+          document.querySelectorAll('.firmware-card').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          selectFirmware(newEntry);
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      };
+
+    } catch (err) {
+      console.error('GitHub Upload Error:', err);
+      ghStatusSpinner.textContent = '❌';
+      ghStatusTitle.textContent = 'เกิดข้อผิดพลาดในการอัปโหลด';
+      ghStatusError.innerHTML = `<strong>เกิดข้อผิดพลาด:</strong> ${escapeHtml(err.message)}`;
+      ghStatusError.style.display = 'block';
+      ghSubmitUploadBtn.disabled = false;
+      ghCancelBtn.style.display = 'inline-flex';
+    }
+  }
+
+  function readBinaryFileAsBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result;
+        const base64 = result.substring(result.indexOf(',') + 1);
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function utf8ToBase64(str) {
+    const bytes = new TextEncoder().encode(str);
+    let binString = "";
+    for (let i = 0; i < bytes.length; i++) {
+      binString += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binString);
+  }
+
+  function base64ToUtf8(base64) {
+    const binString = atob(base64.replace(/\s/g, ''));
+    const bytes = Uint8Array.from(binString, (m) => m.charCodeAt(0));
+    return new TextDecoder().decode(bytes);
   }
 });
 

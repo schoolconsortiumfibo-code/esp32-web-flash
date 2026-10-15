@@ -194,10 +194,20 @@
                 <!-- Custom Flash Action Area -->
                 <div class="flash-action-area">
                     <div id="customFlashSummary" class="flash-summary">
-                        กรุณาเลือกไฟล์ <code>.bin</code> ด้านบนเพื่อเปิดใช้งานปุ่ม Flash
+                        กรุณาเลือกไฟล์ <code>.bin</code> ด้านบนเพื่อเปิดใช้งานปุ่มการทำงาน
                     </div>
-                    <div id="customFlashContainer" class="flash-button-container">
-                        <!-- Dynamic button injected here -->
+                    
+                    <div id="customActionButtonsGroup" class="action-buttons-group" style="display: none;">
+                        <!-- Button 1: Flash to Board via USB -->
+                        <div id="customFlashContainer" class="flash-button-container">
+                            <!-- Dynamic esp-web-install-button injected here -->
+                        </div>
+
+                        <!-- Button 2: Upload to GitHub Repository -->
+                        <button type="button" id="openGithubUploadBtn" class="github-upload-action-btn">
+                            <span class="btn-icon">🚀</span>
+                            <span>อัปโหลดเข้า GitHub Repository (เข้าคลังโปรแกรม)</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -454,6 +464,145 @@
                     </div>
                 </details>
             </div>
+        </div>
+    </div>
+
+    <!-- GitHub Upload Modal (Admin Only) -->
+    <div id="githubUploadModal" class="modal-overlay">
+        <div class="modal-box modal-box-lg">
+            <button type="button" id="ghModalCloseBtn" class="modal-close-btn">&times;</button>
+            <div class="modal-header-group">
+                <span class="modal-icon">🚀</span>
+                <h2 class="modal-title">อัปโหลดเข้า GitHub Repository</h2>
+                <p class="modal-desc">
+                    ส่งไฟล์ <code>.bin</code> ขึ้น GitHub และบันทึกเข้าสู่ <strong>"คลังโปรแกรม"</strong> บนหน้าเว็บ เพื่อให้ทุกคนเปิดเว็บแล้วกด Flash ลงบอร์ดได้ทันที
+                </p>
+            </div>
+
+            <!-- Form Content -->
+            <form id="githubUploadForm" class="gh-upload-form" onsubmit="return false;">
+                <div class="gh-form-grid">
+                    <!-- Section 1: Firmware Metadata -->
+                    <div class="gh-form-section">
+                        <h3 class="gh-section-title">
+                            <span>📋</span>
+                            <span>ข้อมูลโปรแกรมที่จะแสดงในคลัง</span>
+                        </h3>
+
+                        <div class="gh-input-group">
+                            <label class="gh-label" for="ghFwName">ชื่อโปรแกรม (Name): <span class="required">*</span></label>
+                            <input type="text" id="ghFwName" class="gh-input" required placeholder="เช่น AILAS Robot Controller V2">
+                        </div>
+
+                        <div class="gh-input-row">
+                            <div class="gh-input-group">
+                                <label class="gh-label" for="ghFwVersion">เวอร์ชัน (Version):</label>
+                                <input type="text" id="ghFwVersion" class="gh-input" value="1.0.0" placeholder="1.0.0">
+                            </div>
+                            <div class="gh-input-group">
+                                <label class="gh-label" for="ghFwCategory">หมวดหมู่ (Category):</label>
+                                <select id="ghFwCategory" class="gh-select">
+                                    <option value="Robot Controller">Robot Controller</option>
+                                    <option value="Sensors & Motion">Sensors & Motion</option>
+                                    <option value="IoT & Firebase">IoT & Firebase</option>
+                                    <option value="Basic & Test">Basic & Test</option>
+                                    <option value="General">ทั่วไป (General)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="gh-input-group">
+                            <label class="gh-label" for="ghFwDesc">คำอธิบายโปรแกรม (Description):</label>
+                            <textarea id="ghFwDesc" class="gh-textarea" rows="2" placeholder="อธิบายหน้าที่ของโปรแกรม เช่น โปรแกรมควบคุมหุ่นยนต์ Mobile Robot..."></textarea>
+                        </div>
+
+                        <div class="gh-input-row">
+                            <div class="gh-input-group">
+                                <label class="gh-label" for="ghFwAuthor">ผู้พัฒนา (Author):</label>
+                                <input type="text" id="ghFwAuthor" class="gh-input" value="FIBO School Consortium" placeholder="FIBO School Consortium">
+                            </div>
+                            <div class="gh-input-group">
+                                <label class="gh-label" for="ghFwOffset">Offset บันทึก:</label>
+                                <input type="text" id="ghFwOffset" class="gh-input" readonly style="background: rgba(0,0,0,0.3); color: var(--primary);">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: GitHub Repository & Token Config -->
+                    <div class="gh-form-section">
+                        <h3 class="gh-section-title">
+                            <span>🐙</span>
+                            <span>ตั้งค่า GitHub Repository</span>
+                        </h3>
+
+                        <div class="gh-input-row">
+                            <div class="gh-input-group" style="flex: 2;">
+                                <label class="gh-label" for="ghRepoOwner">เจ้าของ / Repository:</label>
+                                <div class="gh-repo-input-combo">
+                                    <input type="text" id="ghRepoOwner" class="gh-input" value="schoolconsortiumfibo-code" placeholder="Owner" title="GitHub Owner / Organization">
+                                    <span class="gh-repo-slash">/</span>
+                                    <input type="text" id="ghRepoName" class="gh-input" value="esp32-web-flash" placeholder="Repo" title="Repository Name">
+                                </div>
+                            </div>
+                            <div class="gh-input-group" style="flex: 1;">
+                                <label class="gh-label" for="ghRepoBranch">Branch:</label>
+                                <input type="text" id="ghRepoBranch" class="gh-input" value="main" placeholder="main">
+                            </div>
+                        </div>
+
+                        <div class="gh-input-group">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <label class="gh-label" for="ghTokenInput" style="margin-bottom: 0;">
+                                    GitHub Personal Access Token (PAT): <span class="required">*</span>
+                                </label>
+                                <a href="https://github.com/settings/tokens/new?scopes=repo&description=ESP32-Web-Flash-Admin" target="_blank" rel="noopener" class="gh-hint-link">
+                                    🔑 วิธีสร้าง Token ↗
+                                </a>
+                            </div>
+                            <div class="gh-password-wrap">
+                                <input type="password" id="ghTokenInput" class="gh-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx หรือ github_pat_xxxx" autocomplete="off">
+                                <button type="button" id="ghToggleTokenVisibilityBtn" class="gh-toggle-btn" title="ดู / ซ่อน Token">👁️</button>
+                            </div>
+                            <div class="gh-token-hint">
+                                สิทธิ์ที่ต้องเลือกตอนสร้าง Token: <code>repo</code> เพื่อให้อนุญาตเขียนไฟล์ลง Repository ได้
+                            </div>
+                            <label class="gh-remember-token-label">
+                                <input type="checkbox" id="ghRememberTokenCheck" checked>
+                                <span>จดจำ Token ไว้ในเบราว์เซอร์นี้ (ไม่ต้องกรอกใหม่ในครั้งต่อไป)</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status & Progress Container (Hidden until upload starts) -->
+                <div id="ghUploadStatusBox" class="gh-status-box" style="display: none;">
+                    <div class="gh-status-header">
+                        <span id="ghStatusSpinner" class="gh-spinner">⏳</span>
+                        <span id="ghStatusTitle">กำลังเตรียมความพร้อม...</span>
+                    </div>
+                    <ul class="gh-steps-list">
+                        <li id="ghStep1" class="gh-step">1. แปลงไฟล์ไบนารีเป็น Base64</li>
+                        <li id="ghStep2" class="gh-step">2. อัปโหลดไฟล์ .bin ไปยัง GitHub</li>
+                        <li id="ghStep3" class="gh-step">3. อัปเดตรายการใน firmwares.json</li>
+                        <li id="ghStep4" class="gh-step">4. เสร็จสมบูรณ์ พร้อมใช้งานในคลังโปรแกรม</li>
+                    </ul>
+                    <div id="ghStatusError" class="gh-status-error" style="display: none;"></div>
+                </div>
+
+                <!-- Modal Actions -->
+                <div class="gh-modal-actions">
+                    <button type="button" id="ghCancelBtn" class="gh-btn-secondary">ยกเลิก</button>
+                    <button type="button" id="ghSubmitUploadBtn" class="gh-btn-primary">
+                        <span>🚀 อัปโหลดเข้า GitHub ทันที</span>
+                    </button>
+                    <button type="button" id="ghViewCatalogBtn" class="gh-btn-success" style="display: none;">
+                        <span>🌐 ไปยังคลังโปรแกรม</span>
+                    </button>
+                    <a id="ghViewRepoLink" href="#" target="_blank" rel="noopener" class="gh-btn-link" style="display: none;">
+                        <span>🔗 ดูบน GitHub ↗</span>
+                    </a>
+                </div>
+            </form>
         </div>
     </div>
 

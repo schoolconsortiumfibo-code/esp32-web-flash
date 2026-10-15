@@ -795,6 +795,369 @@ body {
   transform: translateY(0);
 }
 
+/* Action Buttons Group (Direct Flash & GitHub Upload) */
+.action-buttons-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  animation: fadeIn 0.3s ease;
+}
+
+.github-upload-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  font-family: var(--font-thai);
+  font-size: 1.02rem;
+  font-weight: 600;
+  padding: 14px 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.35);
+}
+
+.github-upload-action-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  background: linear-gradient(135deg, #34d399 0%, #059669 100%);
+  box-shadow: 0 6px 28px rgba(16, 185, 129, 0.55);
+}
+
+.github-upload-action-btn:active {
+  transform: translateY(0);
+}
+
+.github-upload-action-btn .btn-icon {
+  font-size: 1.25rem;
+}
+
+/* Large Modal for GitHub Upload */
+.modal-box.modal-box-lg {
+  max-width: 760px;
+  text-align: left;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 28px 32px;
+}
+
+.modal-header-group {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.modal-header-group .modal-icon {
+  font-size: 2.4rem;
+  margin-bottom: 6px;
+}
+
+.modal-header-group .modal-title {
+  font-size: 1.3rem;
+  margin-bottom: 6px;
+}
+
+.modal-header-group .modal-desc {
+  font-size: 0.9rem;
+  margin-bottom: 0;
+}
+
+.gh-upload-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.gh-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 720px) {
+  .gh-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.gh-form-section {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gh-section-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 8px;
+  margin-bottom: 2px;
+}
+
+.gh-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gh-input-row {
+  display: flex;
+  gap: 10px;
+}
+
+.gh-input-row .gh-input-group {
+  flex: 1;
+}
+
+.gh-label {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.gh-label .required {
+  color: var(--danger);
+}
+
+.gh-input, .gh-select, .gh-textarea {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  font-family: var(--font-thai);
+  font-size: 0.88rem;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: var(--transition);
+  width: 100%;
+}
+
+.gh-input:focus, .gh-select:focus, .gh-textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 10px var(--primary-glow);
+}
+
+.gh-textarea {
+  resize: vertical;
+  min-height: 56px;
+  line-height: 1.4;
+}
+
+.gh-repo-input-combo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gh-repo-slash {
+  color: var(--text-dim);
+  font-weight: bold;
+}
+
+.gh-password-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.gh-password-wrap .gh-input {
+  padding-right: 40px;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+}
+
+.gh-toggle-btn {
+  position: absolute;
+  right: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 4px;
+  opacity: 0.7;
+  transition: var(--transition);
+}
+
+.gh-toggle-btn:hover {
+  opacity: 1;
+}
+
+.gh-token-hint {
+  font-size: 0.76rem;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
+.gh-hint-link {
+  font-size: 0.76rem;
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.gh-remember-token-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.gh-remember-token-label input[type="checkbox"] {
+  accent-color: var(--primary);
+}
+
+/* Upload Status Box */
+.gh-status-box {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(0, 210, 255, 0.3);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: fadeIn 0.3s ease;
+}
+
+.gh-status-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--primary);
+}
+
+.gh-steps-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 4px;
+}
+
+.gh-step {
+  font-size: 0.84rem;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: var(--transition);
+}
+
+.gh-step.active {
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+.gh-step.done {
+  color: #4ade80;
+}
+
+.gh-step.done::after {
+  content: " ✓";
+  font-weight: bold;
+}
+
+.gh-status-error {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+/* Modal Actions */
+.gh-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 18px;
+}
+
+.gh-btn-primary, .gh-btn-secondary, .gh-btn-success, .gh-btn-link {
+  font-family: var(--font-thai);
+  font-size: 0.92rem;
+  font-weight: 600;
+  padding: 10px 22px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.gh-btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+}
+
+.gh-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.gh-btn-primary {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border: none;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+}
+
+.gh-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+}
+
+.gh-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gh-btn-success {
+  background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+  border: none;
+  color: #050a14;
+  box-shadow: 0 4px 14px rgba(0, 210, 255, 0.3);
+}
+
+.gh-btn-success:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 210, 255, 0.5);
+}
+
+.gh-btn-link {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-color);
+  color: #ffffff;
+}
+
+.gh-btn-link:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
 /* Web Serial Terminal Section */
 .terminal-card {
   background: #080c14;
