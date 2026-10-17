@@ -228,12 +228,8 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="badge" style="background: rgba(121,40,202,0.2); color: #d8b4fe;">v${escapeHtml(fw.version)}</span>
         </div>
         <div class="firmware-card-desc">${escapeHtml(fw.description)}</div>
-        <div style="margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 4px;">
+        <div style="margin-top: auto; display: flex; flex-wrap: wrap; gap: 4px;">
           ${tagHtml}
-        </div>
-        <div class="firmware-card-meta">
-          <span>📁 ${escapeHtml(fw.filename)}</span>
-          <span>📍 Offset ${escapeHtml(fw.offsetHex || '0x10000')}</span>
         </div>
       `;
 
@@ -254,7 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function selectFirmware(fw) {
     selectedFirmware = fw;
-    githubFlashSummary.innerHTML = `โปรแกรมที่เลือก: <strong>${escapeHtml(fw.name)}</strong> (ไฟล์: <code>${escapeHtml(fw.filename)}</code> | Offset: <code>${escapeHtml(fw.offsetHex || '0x10000')}</code>)`;
+    githubFlashSummary.innerHTML = `โปรแกรมที่เลือก: <strong>${escapeHtml(fw.name)}</strong>`;
     
     // Generate manifest for this firmware
     // Convert relative filename to absolute URL so esp-web-tools can resolve it properly from a Blob manifest
