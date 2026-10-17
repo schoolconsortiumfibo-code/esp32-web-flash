@@ -1,16 +1,20 @@
 [
   {
-    "id": "ailas_firebase_v2",
-    "name": "AILAS Robot Controller V2",
-    "version": "2.0.0",
+    "id": "ailas_firebase_v2_ino",
+    "name": "Ailas Mobile Robot V2",
+    "version": "1.0.0",
     "chipFamily": "ESP32",
     "category": "Robot Controller",
-    "description": "โปรแกรมควบคุมหุ่นยนต์ Mobile Robot สำหรับโครงการ FIBO-School Consortium",
+    "description": "โปรแกรม Ailas Mobile Robot V2 สำหรับหุ่นยนต์ Mobile Robot (FIBO School Consortium)",
     "filename": "ailas_firebase_V2.ino.bin",
     "offset": 65536,
     "offsetHex": "0x10000",
-    "date": "2026-09-09",
-    "author": "FIBO School Consortium",
-    "tags": ["Robot", "ESP32", "Default"]
+    "date": "2026-10-17",
+    "author": "School Consortium Admin",
+    "tags": [
+      "Robot Controller",
+      "ESP32",
+      "WebUpload"
+    ]
   }
 ]
