@@ -159,7 +159,11 @@ function uploadFileToGitHub(owner, repo, branch, filename, base64Content, token)
   if (code !== 200 && code !== 201) {
     var errObj = {};
     try { errObj = JSON.parse(uploadRes.getContentText()); } catch(ex){}
-    throw new Error("อัปโหลดไฟล์ " + filename + " ไม่สำเร็จ: " + (errObj.message || uploadRes.getContentText()));
+    var rawMsg = errObj.message || uploadRes.getContentText();
+    if (code === 404) {
+      rawMsg = "GitHub แจ้ง 'Not Found' (404) - กรุณาตรวจสอบ: 1) ชื่อ Repository ('" + owner + "/" + repo + "') มีอยู่จริงและสะกดถูกต้อง 2) บัญชีที่ใช้สร้าง GitHub Token ต้องมีสิทธิ์ Write/Push ในโปรเจกต์นี้ 3) หลังใส่ Token ใน Apps Script แล้วต้อง Deploy เป็น New version เสมอ";
+    }
+    throw new Error("อัปโหลดไฟล์ " + filename + " ไม่สำเร็จ: " + rawMsg);
   }
 
   return JSON.parse(uploadRes.getContentText());
